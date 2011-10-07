@@ -16,6 +16,7 @@ _etmux() {
     etmux_path=$ETMUX_PATH
   fi
 
+  cwd=$PWD
   paths=(`echo $etmux_path | tr ":" "\n"`)
   for x in $paths; do
       cd $x
@@ -25,7 +26,7 @@ _etmux() {
       done
       compadd -d files -a -- files
   done
-
+  cd $cwd
 }
 
 _etmux "$@"
