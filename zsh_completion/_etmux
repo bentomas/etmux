@@ -1,0 +1,31 @@
+#compdef etmux
+
+_etmux() {
+  local etmux_path paths files sessions labels
+
+  sessions=(${(f)"$(tmux list-sessions 2> /dev/null | sed -n "s/^\([^:]\{1,\}\):.*/\1/p")"})
+  labels=()
+  for x in $sessions; do
+      labels=($labels "$x+")
+  done
+  compadd -d labels -a -- sessions
+
+  if [ -z $ETMUX_PATH ]; then
+    etmux_path=~/.etmux-projects
+  else
+    etmux_path=$ETMUX_PATH
+  fi
+
+  paths=(`echo $etmux_path | tr ":" "\n"`)
+  for x in $paths; do
+      cd $x
+      files=(*)
+      for s in $sessions; do
+        files=("${(@)files:#$s}")
+      done
+      compadd -d files -a -- files
+  done
+
+}
+
+_etmux "$@"

@@ -1,0 +1,66 @@
+#! /bin/sh
+
+#TODO take arguments like
+#  -d (detach others)
+#  -s (specify socket)
+#  -l (last session) ?
+
+# the first argument passed in will be our session name
+session=$1
+verbose=false
+
+# make sure we have a session name
+if [ -z "$session" ]; then
+  session='0'
+fi
+
+#default ETMUX_PATH
+if [ -z $ETMUX_PATH ]; then
+  ETMUX_PATH=~/.etmux-projects
+fi
+
+
+# do the session exist already
+tmux has-session -t "$session" 2> /dev/null
+if [ $? -eq 0 ]; then
+  $verbose && echo "joining session '$session'"
+
+  # if we're already in a tmux session, then don't try attaching
+  if [ -z $TMUX ]; then
+    join="eval tmux attach-session -t \"$session\""
+  else
+    $verbose && echo "in tmux now, switching"
+    join="eval tmux switch-client -t \"$session\""
+  fi
+
+  $join
+else
+  $verbose && echo "creating session '$session'"
+
+  # store these to either pass to scripts or run ourselves
+  start="eval env TMUX= tmux new-session -d -s \"$session\""
+  if [ -z $TMUX ]; then
+    join="eval tmux attach-session -t \"$session\""
+  else
+    join="eval tmux switch-client -t \"$session\""
+  fi
+
+  # split the ETMUX_PATH string
+  old_ifs=$IFS; IFS=':'; paths=$ETMUX_PATH
+  # loop through each dir in path to see if we have a match
+  for x in $paths; do
+      $verbose && echo "looking in $x"
+      if [ -x "$x/$session" ]; then
+        $verbose && echo "found $x/$session, running..."
+        # run custom script, passing in session name and start and join commands
+        env session=$session start="$start" join="$join" "$x/$session"
+        exit
+      fi
+  done
+  # reset string separator...
+  IFS=$old_ifs
+
+  # no script, just start and join ourselves
+  $verbose && echo "No custom script for session, starting normally..."
+  $start && $join
+fi
