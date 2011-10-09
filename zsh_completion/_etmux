@@ -20,7 +20,7 @@ _etmux() {
   compadd -d labels -a -- sessions
 
   if [ -z $ETMUX_PATH ]; then
-    etmux_path=~/.etmux-projects
+    etmux_path=~/.etmux-sessions
   else
     etmux_path=$ETMUX_PATH
   fi
@@ -28,12 +28,14 @@ _etmux() {
   cwd=$PWD
   paths=(`echo $etmux_path | tr ":" "\n"`)
   for x in $paths; do
+    if [ -d "$x" ]; then
       cd $x
       files=(*)
       for s in $sessions; do
         files=("${(@)files:#$s}")
       done
       compadd -d files -a -- files
+    fi
   done
   cd $cwd
 }
