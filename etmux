@@ -88,7 +88,7 @@ fi
 
 #default ETMUX_PATH
 if [ -z "$ETMUX_PATH" ]; then
-  ETMUX_PATH=~/.etmux-projects
+  ETMUX_PATH=~/.etmux-sessions
 fi
 
 if [ -z "$socket" ] && [ ! -z "$TMUX" ]; then
