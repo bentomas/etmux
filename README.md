@@ -83,7 +83,7 @@ Sometimes all you want to do is just set the default working directory.  I have 
 
     cd /path/to/session/root && $start && $join
 
-`etmux` can play nicely with starting the `tmux` server using a different socket (try `etmux --help` for more details) but to allow switching sessions to work properly with your scripts, `etmux` also passes in a `$tmux` variable as a replacement for the `tmux` command.  This `$tmux` variable makes sure `tmux` is using the right socket. The updated script would look like:
+`etmux` can play nicely with starting the `tmux` server using a different socket (try `etmux --help` for more details) but to allow this to work properly with your scripts, `etmux` also passes in a `$tmux` variable as a replacement for the `tmux` command.  This `$tmux` variable makes sure `tmux` is using the right socket. If you don't use this, then initiating a session from within another session will have unexpeted results. The updated script would look like:
 
     cd /path/to/session/root
 
