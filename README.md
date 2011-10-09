@@ -8,7 +8,8 @@ Simple utility for easily starting and joining [tmux] sessions.
 
 Put the `etmux` shell script in a folder in your path.  If that's not enough instruction, paste these lines into your terminal:
 
-    export PATH=~/bin:$PATH
+    echo "export PATH=$HOME/bin:$PATH" >>  ~/.bashrc
+    . ~/.bashrc
     mkdir ~/bin/
     mv etmux ~/bin/
 
@@ -20,8 +21,7 @@ Simply call `etmux` to start a new session.
 
 Just like `tmux`, the default session is named `0`.  Unlike `tmux` if a session with a name `0` already exists, it will join that instead of creating a new session.  Thus preventing you from unknownlingly starting a bunch of sessions (like this author does).
 
-If you want to call your session something else, just give `etmux` a
-different name:
+If you want to call your session something else, just give `etmux` a different name:
 
     etmux mySession
 
@@ -29,13 +29,15 @@ Again, if a session with the same name already exists, `etmux` will attach to th
 
 If you are already in a `tmux` session when you call `etmux`, instead of nesting the sessions, `etmux` will switch you over to the new session.
 
+To see all the options try:
+
+    etmux --help
+
 ## Predefined Sessions
 
-Sometimes it is handy to have predefined sessions, with windows, panes and
-commands chosen ahead of time (like is addressed by [Tmuxinator] or [Teamocil]).
-Easy!  Just put a shell script in `~/.etmux-projects` that uses the `tmux` command line API to set up your session.
+Sometimes it is handy to have predefined sessions, with windows, panes and commands chosen ahead of time (like is addressed by [Tmuxinator] or [Teamocil]).  Easy!  Just put a shell script in `~/.etmux-sessions` that uses the `tmux` command line API to set up your session.
 
-If you name your script `mySession` and it exists and is executable at `~/.etmux-projects/mySession` then you can run it with:
+If you name your script `mySession` and it exists and is executable at `~/.etmux-sessions/mySession` then you can run it with:
 
     etmux mySession
 
@@ -44,27 +46,29 @@ And as would be expected, if the session is already started, `etmux` will just j
 The smallest feature complete script I can think of:
 
     # change the default working directory for this session
-    cd /path/to/project/root
+    cd /path/to/session/root
 
-    # start the session
+    # start the session, even if we're already in a session
     env TMUX= tmux new-session -d -t mySession
 
     # set up panes and windows
     tmux split-window -h -t mySession
 
-    # actually join session
+    # join the newly created session
     if [ -z $TMUX ]; then
+      # if we aren't in a session, then attach to the new one
       tmux attach-session -t mySession
     else
+      # if we are in a session, then switch this client over to the new one
       tmux switch-client -t mySession
     fi
 
-The nice thing about writing your scripts like this is that they are regular old shell scripts and you could run them directly if you don't want to use `etmux` and they would work fine.  You can't do that with a `YAML` configuration file!
+The nice thing about writing your scripts like this is that they are regular old shell scripts and you could run them directly if you don't want to use `etmux` and they would work fine.
 
-But if that is too much for you, because the starting and joining session code is done in every script, `etmux` will pass in the variables `$start` and `$join`  which will do that for you.  Also having to rewrite the session name so many times makes it a pain to change, so `etmux` will pass in the session name for you as `$session`.  Using those variables, our script looks like:
+However, `etmux` can make writing these scripts easier. Because the starting and joining session code is done in every script, `etmux` will pass in the variables `$start` and `$join`  which will do that for you.  Also having to rewrite the session name so many times makes it a pain to change, so `etmux` will pass in the session name for you as `$session`.  Using those variables, our script looks like:
 
     # change the default working directory for tmux
-    cd /path/to/project/root
+    cd /path/to/session/root
 
     $start
 
@@ -77,13 +81,24 @@ Which is pretty simple.
 
 Sometimes all you want to do is just set the default working directory.  I have a lot of scripts that just look like this:
 
-    cd /path/to/project/root && $start && $join
+    cd /path/to/session/root && $start && $join
+
+`etmux` can play nicely with starting the `tmux` server using a different socket (try `etmux --help` for more details) but to allow switching sessions work properly with the your scripts, your scripts should use a different `tmux` command. `etmux` also passes in a `$tmux` variable as a replacement for the command.  This `$tmux` variable makes sure `tmux` is using the right socket. The updated script would look like:
+
+    cd /path/to/session/root
+
+    $start
+
+    # note use of "$tmux" instead of just "tmux"
+    $tmux split-window -h -t $session
+
+    $join
 
 You may be thinking that this looks complicated, and that the configuration files of Tmuxinator or Teamocil might be easier.  And I mean nothing against either of those projects (they were the inspiration for this project after all), but if you're going to learn how to write configuration files for either of those, why don't you just instead learn the `tmux` API which, while it looks scary at first, is actually pretty straight-forward?  Either way you're still learning something new and this way you can use your new found skillz in `tmux` and if you decide you don't like this project you haven't wasted your time!
 
-If you don't want to store your scripts in `~/.etmux-projects` you can set the `$ETMUX_PATH` environment variable to some other location:
+If you don't want to store your scripts in `~/.etmux-sessions` you can set the `$ETMUX_PATH` environment variable to some other location:
 
-    export ETMUX_PATH=/project/location/one:/project/location/two
+    export ETMUX_PATH=/path/to/sessions/one:/path/to/sessions/two
 
 ## ZSH Command Line Completion
 

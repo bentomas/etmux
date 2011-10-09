@@ -1,9 +1,18 @@
 #compdef etmux
 
 _etmux() {
-  local etmux_path paths files sessions labels
+  local etmux_path paths files sessions labels socket
 
-  sessions=(${(f)"$(tmux list-sessions 2> /dev/null | sed -n "s/^\([^:]\{1,\}\):.*/\1/p")"})
+  #TODO fix completion support so this doesn't happen for the etmux -S option
+
+  socket=
+  if [ ! -z "$TMUX" ]; then
+    socket=`echo $TMUX | sed "s/^\(.*\),[0-9]\+,[0-9]\+$/\1/"`
+    sessions=(${(f)"$(tmux -S "$socket" list-sessions | sed -n "s/^\([^:]\{1,\}\):.*/\1/p")"})
+  else
+    sessions=(${(f)"$(tmux list-sessions | sed -n "s/^\([^:]\{1,\}\):.*/\1/p")"})
+  fi
+
   labels=()
   for x in $sessions; do
       labels=($labels "$x+")

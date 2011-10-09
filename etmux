@@ -1,13 +1,85 @@
 #! /bin/sh
 
-#TODO take arguments like
-#  -d (detach others)
-#  -s (specify socket)
-#  -l (last session) ?
+VERSION=0.2
+
+#TODO option: -l --last (last session) ?
+
+version() {
+echo "$0 version $VERSION"
+}
+
+usage() {
+cat << EOF
+
+usage: $0 [options] [session name]
+
+options:
+  -h    Show this message
+  -v    Output version information
+  -V    Verbose
+
+tmux options:
+  -d    Detach other clients when connecting to session, the same as tmux's
+        attach-session -d option
+  -S    Specify a socket file to use with tmux, the same as tmux's -S
+        option
+
+etmux options:
+  -c    If a session script doesn't exist for this session name, create
+        one, linking it to the current directory
+
+EOF
+}
+
+# DEFAULTS
+detach=
+socket=
+create=
+help=
+version=
+verbose=false
+
+# options
+short="dS:cvVh"
+long="detach,socket:,create,version,help"
+getopt -T > /dev/null 2> /dev/null
+if [ $? -eq 4 ]; then
+  # the getopt supports long arguments
+  opts=`getopt -o $short --long $long -n "$0" -- "$@"`
+else
+  # fall back to basic getopt
+  opts=`getopt $short "$@"`
+fi
+if [ $? != 0 ] ; then echo "getopt failed, terminating..." >&2 ; exit 1 ; fi
+eval set -- "$opts"
+
+while true
+  do case "$1" in
+      d|-d|--detach)  detach="-d" ; shift ;;
+      c|-c|--create)  create=true ; shift ;;
+      S|-S|--socket)
+        # socket has a required argument
+        socket="-S $2"
+        shift 2 ;;
+      v|-v|--version)  version=true; shift ;;
+      h|-h|--help)  help=true; shift ;;
+      V|-V|--verbose)  verbose=true; shift ;;
+      --) shift ; break ;;
+  esac
+done
+
+if [ $help ]; then
+  version
+  usage
+  exit
+fi
+if [ $version ]; then
+  version
+  exit
+fi
 
 # the first argument passed in will be our session name
 session=$1
-verbose=false
 
 # make sure we have a session name
 if [ -z "$session" ]; then
@@ -15,52 +87,76 @@ if [ -z "$session" ]; then
 fi
 
 #default ETMUX_PATH
-if [ -z $ETMUX_PATH ]; then
+if [ -z "$ETMUX_PATH" ]; then
   ETMUX_PATH=~/.etmux-projects
 fi
 
+if [ -z "$socket" ] && [ ! -z "$TMUX" ]; then
+  socket=`echo $TMUX | sed "s/^\(.*\),[0-9]\+,[0-9]\+$/\1/"`
+  socket="-S \"$socket\""
+fi
 
-# do the session exist already
-tmux has-session -t "$session" 2> /dev/null
+# create tmux command parts, easier to do it here all in one place...
+tmux_cmd="tmux $socket"
+attach_cmd="attach-session $detach"
+switch_cmd="switch-client"
+
+# go ahead and create join here, since both code paths use it
+if [ -z "$TMUX" ]; then
+  join="eval $tmux_cmd $attach_cmd -t \"$session\""
+else
+  $verbose && echo "in tmux now, so will switch"
+  join="eval $tmux_cmd $switch_cmd -t \"$session\""
+fi
+
+# does the session exist already?
+eval "$tmux_cmd has-session -t \"$session\" 2> /dev/null"
 if [ $? -eq 0 ]; then
-  $verbose && echo "joining session '$session'"
-
-  # if we're already in a tmux session, then don't try attaching
-  if [ -z $TMUX ]; then
-    join="eval tmux attach-session -t \"$session\""
-  else
-    $verbose && echo "in tmux now, switching"
-    join="eval tmux switch-client -t \"$session\""
-  fi
-
+  $verbose && echo "joining session '$session'..."
+  $verbose && echo "$join"
   $join
 else
-  $verbose && echo "creating session '$session'"
+  $verbose && echo "creating session '$session'..."
 
-  # store these to either pass to scripts or run ourselves
-  start="eval env TMUX= tmux new-session -d -s \"$session\""
-  if [ -z $TMUX ]; then
-    join="eval tmux attach-session -t \"$session\""
-  else
-    join="eval tmux switch-client -t \"$session\""
-  fi
+  # store this to either a) pass to scripts or b) run ourselves
+  start="eval env TMUX= $tmux_cmd new-session -d -s \"$session\""
 
   # split the ETMUX_PATH string
-  old_ifs=$IFS; IFS=':'; paths=$ETMUX_PATH
+  old_ifs=$IFS; IFS=':'; paths=$ETMUX_PATH; IFS=$old_ifs
   # loop through each dir in path to see if we have a match
   for x in $paths; do
-      $verbose && echo "looking in $x"
+      $verbose && echo "looking in $x..."
+      if [ $create ] && [ ! -f "$x/$session" ]; then
+        $verbose && echo "$x/$session not found, creating..."
+
+        cat > "$x/$session" << EOF
+# change the default working directory for tmux
+cd $PWD
+
+\$start
+
+# put your session specific code here. For example, to create a new window...
+# \$tmux new-window -t \$session
+
+\$join
+EOF
+        chmod u+x "$x/$session"
+      fi
+
       if [ -x "$x/$session" ]; then
         $verbose && echo "found $x/$session, running..."
+
         # run custom script, passing in session name and start and join commands
-        env session=$session start="$start" join="$join" "$x/$session"
+        env session=$session start="$start" join="$join" tmux="eval $tmux_cmd" "$x/$session"
+
         exit
       fi
   done
-  # reset string separator...
-  IFS=$old_ifs
 
   # no script, just start and join ourselves
   $verbose && echo "No custom script for session, starting normally..."
-  $start && $join
+  $verbose && echo "$start"
+  $start
+  $verbose && echo "$join"
+  $join
 fi
