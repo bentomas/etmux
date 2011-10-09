@@ -83,7 +83,7 @@ Sometimes all you want to do is just set the default working directory.  I have 
 
     cd /path/to/session/root && $start && $join
 
-`etmux` can play nicely with starting the `tmux` server using a different socket (try `etmux --help` for more details) but to allow switching sessions work properly with the your scripts, your scripts should use a different `tmux` command. `etmux` also passes in a `$tmux` variable as a replacement for the command.  This `$tmux` variable makes sure `tmux` is using the right socket. The updated script would look like:
+`etmux` can play nicely with starting the `tmux` server using a different socket (try `etmux --help` for more details) but to allow switching sessions to work properly with your scripts, `etmux` also passes in a `$tmux` variable as a replacement for the `tmux` command.  This `$tmux` variable makes sure `tmux` is using the right socket. The updated script would look like:
 
     cd /path/to/session/root
 
@@ -94,7 +94,7 @@ Sometimes all you want to do is just set the default working directory.  I have 
 
     $join
 
-You may be thinking that this looks complicated, and that the configuration files of Tmuxinator or Teamocil might be easier.  And I mean nothing against either of those projects (they were the inspiration for this project after all), but if you're going to learn how to write configuration files for either of those, why don't you just instead learn the `tmux` API which, while it looks scary at first, is actually pretty straight-forward?  Either way you're still learning something new and this way you can use your new found skillz in `tmux` and if you decide you don't like this project you haven't wasted your time!
+You may be thinking that this looks complicated, and that the configuration files of Tmuxinator or Teamocil might be easier.  And I mean nothing against either of those projects (they were the inspiration for this project after all), but if you're going to learn how to write configuration files for either of those, why don't you just instead learn the `tmux` API which, while it looks scary at first, is actually pretty straight-forward?  Either way you're still learning something new and this way you can use your new found skillz in `tmux` and if you decide you don't like this project you haven't wasted your time.
 
 If you don't want to store your scripts in `~/.etmux-sessions` you can set the `$ETMUX_PATH` environment variable to some other location:
 
