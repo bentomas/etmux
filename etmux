@@ -140,7 +140,7 @@ runSessionScript() {
     filename=`mktemp /tmp/etmux-session-XXXXXXX`
     echo "start() {\n\t$start_cmd\n}\n" >> $filename
     echo "join() {\n\t$join_cmd\n}\n" >> $filename
-    if [ ! -z $socket_flag ]; then
+    if [ ! -z "$socket_flag" ]; then
         echo "alias tmux='tmux $socket_flag'"
     fi
     cat "$1" >> $filename
@@ -157,9 +157,9 @@ runSessionScript() {
 
 # does the session exist already?
 if [ -z "$socket" ]; then
-    has=`tmux start-server \; list-sessions | sed -n -e "s/$session:\s[0-9]\{1,\}\swindows\s/\0/p"`
+    has=`tmux start-server \; list-sessions | sed -n -e "s/$session: [0-9]\{1,\} windows /\0/p"`
 else
-    has=`tmux -S "$socket" start-server \; list-sessions | sed -n -e "s/$session:\s[0-9]\{1,\}\swindows\s/\0/p"`
+    has=`tmux -S "$socket" start-server \; list-sessions | sed -n -e "s/$session: [0-9]\{1,\} windows /\0/p"`
 fi
 
 # session doesn't exist
