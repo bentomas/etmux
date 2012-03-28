@@ -1,32 +1,29 @@
 #! /bin/sh
 
-VERSION=0.2
-
-#TODO option: -l --last (last session) ?
+VERSION=0.3
 
 version() {
-echo "$0 version $VERSION"
+    echo "$0 version $VERSION"
 }
 
 usage() {
-cat << EOF
+    cat << EOF
 
 usage: $0 [options] [session name]
 
 options:
-  -h    Show this message
-  -v    Output version information
-  -V    Verbose
+    -h    Show this message
+    -v    Output version information
+    -V    Verbose
 
 tmux options:
-  -d    Detach other clients when connecting to session, the same as tmux's
-        attach-session -d option
-  -S    Specify a socket file to use with tmux, the same as tmux's -S
-        option
+    -d    Detach other clients when connecting to session, the same as tmux's
+            attach-session -d option
+    -S    Specify a socket file to use with tmux, the same as tmux's -S option
 
 etmux options:
-  -c    If a session script doesn't exist for this session name, create
-        one, linking it to the current directory
+    -c    If a session script doesn't exist for this session name, create one,
+            linking it to the current directory
 
 EOF
 }
@@ -59,7 +56,8 @@ while true
       c|-c|--create)  create=true ; shift ;;
       S|-S|--socket)
         # socket has a required argument
-        socket="-S $2"
+        socket="$2"
+        socket_flag="-S \"$2\""
         shift 2 ;;
       v|-v|--version)  version=true; shift ;;
       h|-h|--help)  help=true; shift ;;
@@ -92,71 +90,96 @@ if [ -z "$ETMUX_PATH" ]; then
 fi
 
 if [ -z "$socket" ] && [ ! -z "$TMUX" ]; then
-  socket=`echo $TMUX | sed "s/^\(.*\),[0-9]\+,[0-9]\+$/\1/"`
-  socket="-S \"$socket\""
+  # they haven't specified their own socket, so we get the location of the
+  # current one, to make sure all commands use the right socket
+  socket=`echo $TMUX | sed "s/^\(.*\),[0-9]\{1,\},[0-9]\{1,\}$/\1/"`
+  socket_flag="-S \"$socket\""
 fi
-
-# create tmux command parts, easier to do it here all in one place...
-tmux_cmd="tmux $socket"
-attach_cmd="attach-session $detach"
-switch_cmd="switch-client"
 
 # go ahead and create join here, since both code paths use it
 if [ -z "$TMUX" ]; then
-  join="eval $tmux_cmd $attach_cmd -t \"$session\""
+    join_cmd="tmux $socket_flag attach-session $detach -t \"$session\""
 else
-  $verbose && echo "in tmux now, so will switch"
-  join="eval $tmux_cmd $switch_cmd -t \"$session\""
+    $verbose && echo "in tmux now, so will switch"
+    if [ ! -z "$detach" ]; then
+        detach="detach-client -s $session \\;"
+    fi
+    join_cmd="tmux $socket_flag $detach switch-client -t \"$session\""
 fi
 
-# does the session exist already?
-eval "$tmux_cmd has-session -t \"$session\" 2> /dev/null"
-if [ $? -eq 0 ]; then
-  $verbose && echo "joining session '$session'..."
-  $verbose && echo "$join"
-  $join
-else
-  $verbose && echo "creating session '$session'..."
-
-  # store this to either a) pass to scripts or b) run ourselves
-  start="eval env TMUX= $tmux_cmd new-session -d -s \"$session\""
-
+checkForSessionScript() {
   # split the ETMUX_PATH string
   old_ifs=$IFS; IFS=':'; paths=$ETMUX_PATH; IFS=$old_ifs
   # loop through each dir in path to see if we have a match
   for x in $paths; do
       $verbose && echo "looking in $x..."
+
+      # if we are supposed to create the script and it doesn't exist...
       if [ $create ] && [ ! -f "$x/$session" ]; then
         $verbose && echo "$x/$session not found, creating..."
 
-        cat > "$x/$session" << EOF
-# change the default working directory for tmux
-cd $PWD
-
-\$start
-
-# put your session specific code here. For example, to create a new window...
-# \$tmux new-window -t \$session
-
-\$join
-EOF
+        createDefaultSessionScript > "$x/$session"
         chmod u+x "$x/$session"
       fi
 
       if [ -x "$x/$session" ]; then
-        $verbose && echo "found $x/$session, running..."
-
-        # run custom script, passing in session name and start and join commands
-        env session=$session start="$start" join="$join" tmux="eval $tmux_cmd" "$x/$session"
-
-        exit
+          echo "$x/$session"
+          break
       fi
   done
+}
 
-  # no script, just start and join ourselves
-  $verbose && echo "No custom script for session, starting normally..."
-  $verbose && echo "$start"
-  $start
-  $verbose && echo "$join"
-  $join
+createDefaultSessionScript() {
+    echo "DEFAULT"
+}
+
+runSessionScript() {
+    $verbose && echo "found $1, running..."
+
+    # create custom script
+    filename=`mktemp /tmp/etmux-session-XXXXXXX`
+    echo "start() {\n\t$start_cmd\n}\n" >> $filename
+    echo "join() {\n\t$join_cmd\n}\n" >> $filename
+    if [ ! -z $socket_flag ]; then
+        echo "alias tmux='tmux $socket_flag'"
+    fi
+    cat "$1" >> $filename
+
+    # run the custom script
+    env socket="$socket" etmux=$filename session=$session sh $filename
+
+    #remove custom script
+    rm $filename
+
+    # exit so we don't do anything else
+    exit
+}
+
+# does the session exist already?
+if [ -z "$socket" ]; then
+    has=`tmux start-server \; list-sessions | sed -n -e "s/$session:\s[0-9]\{1,\}\swindows\s/\0/p"`
+else
+    has=`tmux -S "$socket" start-server \; list-sessions | sed -n -e "s/$session:\s[0-9]\{1,\}\swindows\s/\0/p"`
+fi
+
+# session doesn't exist
+if [ -z "$has" ]; then
+    $verbose && echo "creating session '$session'..."
+
+    start_cmd="env TMUX= tmux $socket_flag new-session -d -s \"$session\""
+
+    sessionScript=`checkForSessionScript`
+
+    if [ -z "$sessionScript" ]; then
+        # no script, just start and join ourselves
+        $verbose && echo "No custom script for session, starting normally..."
+        eval $start_cmd
+        eval $join_cmd
+    else
+        runSessionScript $sessionScript
+    fi
+else
+#session exists
+    $verbose && echo "joining session '$session'..."
+    eval $join_cmd
 fi
