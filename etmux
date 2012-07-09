@@ -141,14 +141,14 @@ runSessionScript() {
     echo "start() {\n\t$start_cmd\n}\n" >> $filename
     echo "join() {\n\t$join_cmd\n}\n" >> $filename
     if [ ! -z "$socket_flag" ]; then
-        echo "alias tmux='tmux $socket_flag'"
+        echo "alias tmux='tmux $socket_flag'" >> $filename
     fi
     cat "$1" >> $filename
 
     # run the custom script
-    env socket="$socket" etmux=$filename session=$session sh $filename
+    env socket="$socket" session="$session" sh $filename
 
-    #remove custom script
+    # remove custom script
     rm $filename
 
     # exit so we don't do anything else
@@ -162,8 +162,9 @@ else
     has=`tmux -S "$socket" start-server \; list-sessions | sed -n -e "s/$session: [0-9]\{1,\} windows /\0/p"`
 fi
 
-# session doesn't exist
 if [ -z "$has" ]; then
+    # session doesn't exist
+
     $verbose && echo "creating session '$session'..."
 
     start_cmd="env TMUX= tmux $socket_flag new-session -d -s \"$session\""
@@ -179,7 +180,8 @@ if [ -z "$has" ]; then
         runSessionScript $sessionScript
     fi
 else
-#session exists
+    # session exists
+
     $verbose && echo "joining session '$session'..."
     eval $join_cmd
 fi
