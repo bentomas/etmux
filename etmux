@@ -109,7 +109,7 @@ fi
 
 checkForSessionScript() {
   # split the ETMUX_PATH string
-  old_ifs=$IFS; IFS=':'; paths=$ETMUX_PATH; IFS=$old_ifs
+  old_ifs=$IFS; IFS=':'; paths=$ETMUX_PATH
   # loop through each dir in path to see if we have a match
   for x in $paths; do
       $verbose && echo "looking in $x..."
@@ -127,6 +127,7 @@ checkForSessionScript() {
           break
       fi
   done
+  IFS=$old_ifs
 }
 
 createDefaultSessionScript() {
