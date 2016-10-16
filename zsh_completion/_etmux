@@ -19,10 +19,10 @@ _etmux() {
   done
   compadd -X " -- active --" -J active -d sessions -a -- sessions
 
-  if [ -z $ETMUX_PATH ]; then
+  if [ -z $EASY_TMUX_PATH ]; then
     etmux_path=~/.etmux-sessions
   else
-    etmux_path=$ETMUX_PATH
+    etmux_path=$EASY_TMUX_PATH
   fi
 
   cwd=$PWD
