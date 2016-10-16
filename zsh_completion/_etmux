@@ -17,7 +17,7 @@ _etmux() {
   for x in $sessions; do
       labels=($labels "$x+")
   done
-  compadd -d labels -a -- sessions
+  compadd -X " -- active --" -J active -d sessions -a -- sessions
 
   if [ -z $ETMUX_PATH ]; then
     etmux_path=~/.etmux-sessions
@@ -34,7 +34,7 @@ _etmux() {
       for s in $sessions; do
         files=("${(@)files:#$s}")
       done
-      compadd -d files -a -- files
+      compadd -X " -- saved --" -J saved -d files -a -- files
     fi
   done
   cd $cwd
