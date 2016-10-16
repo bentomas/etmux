@@ -84,9 +84,9 @@ if [ -z "$session" ]; then
   session='0'
 fi
 
-#default ETMUX_PATH
-if [ -z "$ETMUX_PATH" ]; then
-  ETMUX_PATH=~/.etmux-sessions
+#default EASY_TMUX_PATH
+if [ -z "$EASY_TMUX_PATH" ]; then
+  EASY_TMUX_PATH=~/.etmux-sessions
 fi
 
 if [ -z "$socket" ] && [ ! -z "$TMUX" ]; then
@@ -108,8 +108,8 @@ else
 fi
 
 checkForSessionScript() {
-  # split the ETMUX_PATH string
-  old_ifs=$IFS; IFS=':'; paths=$ETMUX_PATH
+  # split the EASY_TMUX_PATH string
+  old_ifs=$IFS; IFS=':'; paths=$EASY_TMUX_PATH
   # loop through each dir in path to see if we have a match
   for x in $paths; do
       $verbose && echo "looking in $x..."
