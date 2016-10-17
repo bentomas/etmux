@@ -44,10 +44,10 @@ sessions() {
   fi
 
   for s in $sessions; do
-   echo "$s *"
+   echo "✓ $s"
   done
   for f in $files; do
-   echo $f
+   echo "  $f"
   done
 }
 
@@ -59,5 +59,5 @@ session_name=$(echo "$fzf_out" | tail -n1)
 command=$(echo "$session_name" | awk '{ print $1 }')
 
 if [ "$session_name" ]; then
- etmux $session_name
+ etmux ${session_name:2}
 fi
