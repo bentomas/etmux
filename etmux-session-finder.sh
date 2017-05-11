@@ -27,7 +27,7 @@ file_sessions() {
 }
 
 active_sessions() {
-  tmux ls -F '#{session_attached} #{?session_last_attached,,0}#{session_last_attached} #{session_name}' | sort -r | perl -pe 's/^[0-9]+ [0-9]+ //'
+  tmux ls -F '#{session_attached} #{?session_last_attached,,0}#{session_last_attached} #{session_name}' 2> /dev/null | sort -r | perl -pe 's/^[0-9]+ [0-9]+ //'
 }
 
 sessions() {
