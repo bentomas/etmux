@@ -24,9 +24,9 @@ Simply call `etmux` to start a new session.
 
     etmux
 
-Just like `tmux`, the default session is named `0`.  Unlike `tmux` if a session
-with a name `0` already exists, it will join that instead of creating a new
-session.  Thus preventing you from unknownlingly starting a bunch of sessions
+By default `etmux` will name the session after the current directory. If a session
+with that name already exists, it will join that instead of creating a new
+one.  This prevents you from unknownlingly starting a bunch of sessions
 (like this author does).
 
 If you want to call your session something else, just give `etmux` a different name:

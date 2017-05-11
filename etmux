@@ -81,7 +81,7 @@ session=$1
 
 # make sure we have a session name
 if [ -z "$session" ]; then
-  session='0'
+  session="${PWD##*/}"
 fi
 
 #default EASY_TMUX_PATH
