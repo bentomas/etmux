@@ -92,6 +92,7 @@ fi
 
 # go ahead and create join here, since both code paths use it
 if [ -z "$TMUX" ]; then
+    $verbose && echo "not in tmux, will attach"
     join_cmd="tmux $socket_flag attach-session $detach -t \"$session\""
 else
     $verbose && echo "in tmux now, so will switch"
@@ -106,7 +107,7 @@ checkForSessionScript() {
   old_ifs=$IFS; IFS=':'; paths=$EASY_TMUX_PATH
   # loop through each dir in path to see if we have a match
   for x in $paths; do
-      $verbose && echo "looking in $x..."
+      $verbose && echo "looking in $x..." >&2
 
       if [ -x "$x/$session" ]; then
           echo "$x/$session"
@@ -116,12 +117,8 @@ checkForSessionScript() {
   IFS=$old_ifs
 }
 
-createDefaultSessionScript() {
-    echo "DEFAULT"
-}
-
 runSessionScript() {
-    $verbose && echo "found $1, running..."
+    $verbose && echo "running $1..." >&2
 
     # create custom script
     filename=`mktemp /tmp/etmux-session-XXXXXXX`
@@ -131,6 +128,8 @@ runSessionScript() {
         echo "alias tmux='tmux $socket_flag'" >> $filename
     fi
     cat "$1" >> $filename
+
+    $verbose && echo "created tmp script at $filename" >&2
 
     # run the custom script
     env socket="$socket" session="$session" sh $filename
@@ -157,10 +156,13 @@ if [ -z "$has" ]; then
     start_cmd="env TMUX= tmux $socket_flag new-session -d -s \"$session\""
 
     sessionScript=`checkForSessionScript`
+    if [ "$?" -ne 0 ]; then
+      exit
+    fi
 
     if [ -z "$sessionScript" ]; then
         # no script, just start and join ourselves
-        $verbose && echo "No custom script for session, starting normally..."
+        $verbose && echo "did not find matching project, starting in current dir..."
         eval $start_cmd
         eval $join_cmd
     else
