@@ -21,24 +21,19 @@ tmux options:
             attach-session -d option
     -S    Specify a socket file to use with tmux, the same as tmux's -S option
 
-etmux options:
-    -c    If a session script doesn't exist for this session name, create one,
-            linking it to the current directory
-
 EOF
 }
 
 # DEFAULTS
 detach=
 socket=
-create=
 help=
 version=
 verbose=false
 
 # options
 short="dS:cvVh"
-long="detach,socket:,create,version,help"
+long="detach,socket:,version,help"
 getopt -T > /dev/null 2> /dev/null
 if [ $? -eq 4 ]; then
   # the getopt supports long arguments
@@ -53,7 +48,6 @@ eval set -- "$opts"
 while true
   do case "$1" in
       d|-d|--detach)  detach="-d" ; shift ;;
-      c|-c|--create)  create=true ; shift ;;
       S|-S|--socket)
         # socket has a required argument
         socket="$2"
@@ -113,14 +107,6 @@ checkForSessionScript() {
   # loop through each dir in path to see if we have a match
   for x in $paths; do
       $verbose && echo "looking in $x..."
-
-      # if we are supposed to create the script and it doesn't exist...
-      if [ $create ] && [ ! -f "$x/$session" ]; then
-        $verbose && echo "$x/$session not found, creating..."
-
-        createDefaultSessionScript > "$x/$session"
-        chmod u+x "$x/$session"
-      fi
 
       if [ -x "$x/$session" ]; then
           echo "$x/$session"
