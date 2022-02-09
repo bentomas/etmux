@@ -199,6 +199,5 @@ else
     # session exists
 
     $verbose && echo "joining session '$session'"
-    exit
     eval $join_cmd
 fi
