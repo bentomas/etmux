@@ -82,6 +82,10 @@ fi
 if [ -z "$ETMUX_PATH" ]; then
   ETMUX_PATH=~/.etmux-sessions
 fi
+#default ETMUX_SCRIPT_NAME
+if [ -z "$ETMUX_SCRIPT_NAME" ]; then
+  ETMUX_SCRIPT_NAME=.etmux.sh
+fi
 
 if [ -z "$socket" ] && [ ! -z "$TMUX" ]; then
   # they haven't specified their own socket, so we get the location of the
@@ -109,7 +113,11 @@ checkForSessionScript() {
   for x in $paths; do
       $verbose && echo "looking in $x..." >&2
 
-      if [ -d "$x/$session" ]; then
+      if [ -x "$x/$session/$ETMUX_SCRIPT_NAME" ]; then
+          $verbose && echo "found script: $x/$session/$ETMUX_SCRIPT_NAME" >&2
+          echo "$x/$session/$ETMUX_SCRIPT_NAME"
+          break
+      elif [ -d "$x/$session" ]; then
           $verbose && echo "found directory: $x/$session" >&2
           echo "$x/$session"
           break
