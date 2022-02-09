@@ -3,6 +3,7 @@
 _etmux() {
   local etmux_path paths files sessions labels socket
 
+  #TODO make sure we've got the right style https://github.com/zsh-users/zsh/blob/master/Etc/completion-style-guide
   #TODO fix completion support so this doesn't happen for the etmux -S option
 
   socket=
