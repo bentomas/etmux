@@ -42,7 +42,7 @@ else
   # fall back to basic getopt
   opts=`getopt $short "$@"`
 fi
-if [ $? != 0 ] ; then echo "getopt failed, terminating..." >&2 ; exit 1 ; fi
+if [ $? != 0 ] ; then echo "getopt failed, terminating" >&2 ; exit 1 ; fi
 eval set -- "$opts"
 
 while true
@@ -111,7 +111,7 @@ checkForSessionScript() {
   old_ifs=$IFS; IFS=':'; paths=$ETMUX_PATH
   # loop through each dir in path to see if we have a match
   for x in $paths; do
-      $verbose && echo "looking in $x..." >&2
+      $verbose && echo "looking in $x" >&2
 
       if [ -x "$x/$session/$ETMUX_SCRIPT_NAME" ]; then
           $verbose && echo "found script: $x/$session/$ETMUX_SCRIPT_NAME" >&2
@@ -134,7 +134,7 @@ checkForSessionScript() {
 }
 
 runSessionScript() {
-    $verbose && echo "running $1..." >&2
+    $verbose && echo "running $1" >&2
 
     if [ -d "$x/$session" ]; then
       cd $1
@@ -178,7 +178,7 @@ fi
 if [ -z "$has" ]; then
     # session doesn't exist
 
-    $verbose && echo "creating session '$session'..."
+    $verbose && echo "creating session '$session'"
 
     start_cmd="env TMUX= tmux $socket_flag new-session -d -s \"$session\""
 
@@ -189,7 +189,7 @@ if [ -z "$has" ]; then
 
     if [ -z "$sessionScript" ]; then
         # no script, just start and join ourselves
-        $verbose && echo "did not find matching project, starting in current dir..."
+        $verbose && echo "did not find matching project, starting in current dir"
         eval $start_cmd
         eval $join_cmd
     else
@@ -198,6 +198,7 @@ if [ -z "$has" ]; then
 else
     # session exists
 
-    $verbose && echo "joining session '$session'..."
+    $verbose && echo "joining session '$session'"
+    exit
     eval $join_cmd
 fi
