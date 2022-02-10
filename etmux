@@ -113,11 +113,7 @@ checkForSessionScript() {
   for x in $paths; do
       $verbose && echo "looking in $x" >&2
 
-      if [ -x "$x/$session/$ETMUX_SCRIPT_NAME" ]; then
-          $verbose && echo "found script: $x/$session/$ETMUX_SCRIPT_NAME" >&2
-          echo "$x/$session/$ETMUX_SCRIPT_NAME"
-          break
-      elif [ -d "$x/$session" ]; then
+      if [ -d "$x/$session" ]; then
           $verbose && echo "found directory: $x/$session" >&2
           echo "$x/$session"
           break
@@ -148,8 +144,8 @@ runSessionScript() {
         echo "alias tmux='tmux $socket_flag'" >> $filename
     fi
 
-    if [ -d "$1" -a -x "$1/.etmux" ]; then
-      cat "$1/.etmux" >> $filename
+    if [ -d "$1" -a -x "$1/$ETMUX_SCRIPT_NAME" ]; then
+      cat "$1/$ETMUX_SCRIPT_NAME" >> $filename
     elif [ ! -d "$1" -a -x "$1" ]; then
       cat "$1" >> $filename
     else
