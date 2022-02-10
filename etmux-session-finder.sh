@@ -11,10 +11,10 @@ file_sessions() {
   local etmux_path
   local files
 
-  if [ -z $EASY_TMUX_PATH ]; then
+  if [ -z $ETMUX_PATH ]; then
     etmux_path=~/.etmux-sessions
   else
-    etmux_path=$EASY_TMUX_PATH
+    etmux_path=$ETMUX_PATH
   fi
 
   paths=(`echo $etmux_path | tr ":" "\n"`)
