@@ -152,7 +152,10 @@ runSessionScript() {
       echo "start && join" >> $filename
     fi
 
-    $verbose && echo "created tmp script at $filename" >&2
+    $verbose && echo "created tmp script at $filename:" >&2
+    $verbose && echo "---------------------------------" >&2
+    $verbose && cat $filename >&2
+    $verbose && echo "---------------------------------" >&2
 
     # run the custom script
     env socket="$socket" session="$session" sh $filename
