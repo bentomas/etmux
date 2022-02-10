@@ -8,15 +8,7 @@ type is `et<TAB>`.
 
 ## Install
 
-Put the `etmux` shell script in a folder in your path.  If that's not enough
-instruction, paste these lines into your terminal:
-
-    git clone git@github.com:bentomas/etmux.git
-    cd etmux
-    echo "export PATH=$HOME/bin:$PATH" >>  ~/.bashrc
-    . ~/.bashrc
-    mkdir ~/bin/
-    cp etmux ~/bin/
+Put the `etmux` shell script in a folder in your path.
 
 ## Usage
 
@@ -45,15 +37,22 @@ To see all the options try:
 
 ## Predefined Sessions
 
-Sometimes it is handy to have predefined sessions, with windows, panes and
-commands chosen ahead of time (like is addressed by [Tmuxinator] or [Teamocil]).
-Easy! Just put a shell script in `~/.etmux-sessions` that uses the `tmux` command
-line API to set up your session.
+`etmux` can open predefined sessions.  Just set the `$ETMUX_PATH` environment
+variable to a directory or two that contains your projects:
 
-If you name your script `mySession` and it exists at `~/.etmux-sessions/mySession`
-then you can run your script it with:
+    export ETMUX_PATH=/path/to/sessions/one:/path/to/sessions/two
 
-    etmux mySession
+And then you can give the name of a project to etmux...
+
+    etmux proj1
+
+This will start a tmux session in the directory for that project.
+
+Sometimes it is handy to go one step further and have predefined sessions, complete
+with windows, panes and commands chosen ahead of time.  Easy! Just put a shell script
+one of the directories specified with the `ETMUX_PATH` env variable, or put a
+`.etmux.sh` in a specific directory, found above and `etmux` will run it when
+starting your session.
 
 And as would be expected, if the session is already started, `etmux` will just
 join that session instead of starting it again and rerunning your script.
@@ -106,14 +105,6 @@ lot of scripts that just look like this:
 
     cd /path/to/session/root && start && join
 
-`etmux` can play nicely with starting the `tmux` server using a different socket
-(try `etmux --help` for more details) and to allow this to work properly with your
-scripts, `etmux` gives your script an aliased `tmux` command so you don't have to
-deal with the socket stuff yourself. If you want to know the location of the
-socket for your session, `etmux` passes in a `$socket` variable for your convenience.
-If that doesn't make any sense to you, don't worry about it, and just trust that
-`etmux` is taking care of you.
-
 You may be thinking that all this looks complicated, and that the configuration
 files of Tmuxinator or Teamocil might be easier.  And I mean nothing against
 either of those projects (they were the inspiration for this project after all),
@@ -123,11 +114,6 @@ scary at first, is actually pretty straight-forward?  Either way you're still
 learning something new and this way you can use your new found skillz in `tmux`
 itself. And if you decide you don't like this project you haven't wasted your
 time.
-
-By the way, if you don't want to store your scripts in `~/.etmux-sessions` you
-can set the `$ETMUX_PATH` environment variable to some other location:
-
-    export ETMUX_PATH=/path/to/sessions/one:/path/to/sessions/two
 
 ## ZSH Command Line Completion
 
